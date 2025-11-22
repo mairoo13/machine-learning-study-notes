@@ -1,0 +1,109 @@
+#来自课题的第一个项目——简易计算器#
+***
++姗姗来迟，才想起上传自己第一个项目
+```
+#include <stdio.h>
+#include <math.h> 
+#include <windows.h> 
+
+int main(void){
+    double num1, num2, result;
+    int choose;
+    char continue_flag;
+    system("color 0c");
+
+
+    do {
+        printf("\n   .-\"\"\"\"\"\"\"\"\"-.     \n");
+        printf("  /             \\    \n");
+        printf(" |  O         O  |    \n");
+        printf(" |      >.<      |    \n");
+        printf(" |               |    \n");
+        printf(" |      ___      |    \n");
+        printf("  \\    \\___/    /     \n");
+        printf("   `-------------'    \n");
+        printf("########自制简易计算器########\n");
+        printf("1. 加法\n");
+        printf("2. 减法\n");
+        printf("3. 乘法\n");
+        printf("4. 除法\n");
+        printf("5. 平方\n");
+        printf("6. 立方\n");
+        printf("7. 平方根\n");
+        printf("8. 直接退出\n");
+        printf("请选择运算(1-8): ");
+        scanf("%d", &choose);
+        
+        if(choose == 8){
+            printf("谢谢使用！再见！\n");
+            break;
+        }
+        
+        if(choose >= 1 && choose <= 4){
+            printf("请输入两个数值(用空格分隔): ");
+            scanf("%lf %lf", &num1, &num2);
+        }else if(choose >= 5 && choose <= 7){
+            printf("请输入一个数值: ");
+            scanf("%lf", &num1);
+        }else{
+            printf("输入错误！请选择1-8之间的数字！\n");
+        
+            
+        }
+
+        switch(choose){
+            case 1:
+                result = num1 + num2;
+                printf("结果：%.2lf + %.2lf = %.2lf\n", num1, num2, result);
+                break;
+            case 2:
+                result = num1 - num2;
+                printf("结果: %.2lf - %.2lf = %.2lf\n", num1, num2, result);
+                break;
+            case 3:
+                result = num1 * num2;
+                printf("结果: %.2lf * %.2lf = %.2lf\n", num1, num2, result);
+                break;
+            case 4:
+                if (num2 == 0){
+                    printf("错误: 除数不能为0\n");
+                }else{
+                    result = num1 / num2;
+                    printf("结果: %.2lf / %.2lf = %.2lf\n", num1, num2, result);
+                }
+                break;
+            case 5:
+                result = num1 * num1;
+                printf("结果: %.2lf的平方 = %.2lf\n", num1, result);
+                break;
+            case 6:
+                result = num1 * num1 * num1;
+                printf("结果: %.2lf的立方 = %.2lf\n", num1, result);
+                break;
+            case 7:
+                if (num1 < 0){
+                    printf("错误: 负数不能计算平方根\n");
+                }else{
+                    result = sqrt(num1);
+                    printf("结果: %.2lf的平方根 = %.2lf\n", num1, result);
+                }
+                break;
+        }
+        
+      
+        printf("\n是否继续运算？(y/n): ");
+     
+        while(getchar() != '\n');
+        scanf("%c", &continue_flag);
+        
+      
+        if(continue_flag != 'y' && continue_flag != 'Y'){
+            printf("谢谢使用！再见！\n");
+            break;
+        }
+        
+    } while(1); 
+
+    return 0;
+}
+```
