@@ -1,0 +1,322 @@
+#简易运动会管理项目#
+#include <stdio.h>
+#include <string.h>
+
+// 宏定义：限制最大学生数和项目数（便于修改）
+#define MAX_STUDENT 50   // 最多录入50名学生
+#define MAX_PROJECT 4    // 预设4个运动项目
+int i;
+int j;
+// 运动项目结构体：存储项目名称和报名人数
+typedef struct {
+    char pro_name[20];   // 项目名称
+    int pro_count;       // 该项目报名人数
+} SportProject;
+
+// 学生结构体：存储学生基础信息和报名项目
+typedef struct {
+    char stu_id[15];     // 学号（唯一标识）
+    char stu_name[20];   // 姓名
+    char stu_grade[10];  // 年级（如"2024级"）
+    int pro_idx;         // 报名项目的索引（对应项目数组下标，-1表示未报名）
+} Student;
+
+// 全局变量：学生数组、项目数组、已录入学生数（简化函数传参，适配大一知识）
+Student students[MAX_STUDENT];
+SportProject projects[MAX_PROJECT] = {{"100米跑步", 0}, {"跳远", 0}, {"跳高", 0}, {"铅球", 0}};
+int stu_num = 0;  // 已录入的学生数量，初始为0
+
+// 函数声明（模块化设计：先声明后实现）
+void show_menu();         // 显示主菜单
+void add_student();       // 录入学生信息
+void sign_up_project();   // 学生报名运动项目
+void query_by_stuid();    // 按学号查询学生信息
+void query_by_project();  // 按项目查询报名学生
+void count_project();     // 统计各项目报名人数
+void sort_project();      // 按报名人数降序排序项目
+void show_all_info();     // 显示所有学生和项目信息
+void clear_buffer();      // 清理输入缓冲区（解决换行符残留问题）
+
+// 主函数：程序入口，实现菜单循环
+int main() {
+    int choice;  // 存储用户的菜单选择
+
+    // 初始化项目报名人数为0（冗余初始化，确保数据干净）
+    for ( i = 0; i < MAX_PROJECT; i++) {
+        projects[i].pro_count = 0;
+    }
+
+    // 系统主循环：直至用户选择退出
+    while (1) {
+        show_menu();
+        printf("请输入功能选择（1-8）：");
+        scanf("%d", &choice);
+        clear_buffer();  // 清理缓冲区，避免后续输入出错
+
+        // 选择结构：根据输入执行对应功能
+        switch (choice) {
+            case 1: add_student(); break;
+            case 2: sign_up_project(); break;
+            case 3: query_by_stuid(); break;
+            case 4: query_by_project(); break;
+            case 5: count_project(); break;
+            case 6: sort_project(); break;
+            case 7: show_all_info(); break;
+            case 8:
+                printf("感谢使用校园运动会报名管理系统！\n");
+                return 0;  // 退出程序
+            default:
+                printf("输入错误！请输入1-8之间的数字。\n");
+                break;
+        }
+
+        // 暂停程序，方便用户查看结果（按任意键继续）
+        printf("\n按回车键继续...");
+        getchar();
+        // 清屏（Windows系统用cls，Linux/Mac用clear）
+        system("cls");
+    }
+    return 0;
+}
+
+// 清理输入缓冲区：解决scanf后换行符残留的问题（大一常见坑）
+void clear_buffer() {
+    while (getchar() != '\n');
+}
+
+// 显示系统主菜单
+void show_menu() {
+    printf("====================校园运动会报名管理系统====================\n");
+    printf("| 1. 录入学生信息       2. 运动项目报名                      |\n");
+    printf("| 3. 按学号查询信息     4. 按项目查询学生                    |\n");
+    printf("| 5. 统计项目报名人数   6. 按人数排序项目                    |\n");
+    printf("| 7. 显示所有信息       8. 退出系统                          |\n");
+    printf("=============================================================\n");
+}
+
+// 录入学生信息：检查学号唯一性，避免重复录入
+void add_student() {
+    // 检查是否超出最大学生数
+    if (stu_num >= MAX_STUDENT) {
+        printf("已达到最大录入学生数（%d），无法继续录入！\n", MAX_STUDENT);
+        return;
+    }
+
+    Student temp_stu;  // 临时存储当前录入的学生信息
+    printf("请输入学生学号：");
+    scanf("%s", temp_stu.stu_id);
+    clear_buffer();
+
+    // 检查学号是否重复（遍历已录入学生）
+    for ( i = 0; i < stu_num; i++) {
+        if (strcmp(students[i].stu_id, temp_stu.stu_id) == 0) {
+            printf("该学号已存在！请勿重复录入。\n");
+            return;
+        }
+    }
+
+    // 录入姓名和年级
+    printf("请输入学生姓名：");
+    scanf("%s", temp_stu.stu_name);
+    clear_buffer();
+    printf("请输入学生年级（如2024级）：");
+    scanf("%s", temp_stu.stu_grade);
+    clear_buffer();
+
+    temp_stu.pro_idx = -1;  // 初始化为-1，表示未报名任何项目
+    students[stu_num] = temp_stu;  // 将临时学生信息存入数组
+    stu_num++;  // 已录入学生数+1
+
+    printf("学生信息录入成功！当前已录入%d名学生。\n", stu_num);
+}
+
+// 学生报名运动项目：根据学号匹配学生，选择项目并更新报名人数
+void sign_up_project() {
+    // 无学生信息时无法报名
+    if (stu_num == 0) {
+        printf("暂无录入的学生信息，请先执行【录入学生信息】功能！\n");
+        return;
+    }
+
+    char temp_id[15];
+    printf("请输入报名学生的学号：");
+    scanf("%s", temp_id);
+    clear_buffer();
+
+    // 遍历学生数组，查找对应学号的学生
+    int stu_index = -1;  // 存储找到的学生索引，-1表示未找到
+    for ( i = 0; i < stu_num; i++) {
+        if (strcmp(students[i].stu_id, temp_id) == 0) {
+            stu_index = i;
+            break;
+        }
+    }
+
+    if (stu_index == -1) {
+        printf("未找到该学号的学生！\n");
+        return;
+    }
+
+    // 显示可选运动项目
+    printf("请选择报名的运动项目（1-%d）：\n", MAX_PROJECT);
+    for ( i = 0; i < MAX_PROJECT; i++) {
+        printf("%d. %s\n", i + 1, projects[i].pro_name);
+    }
+
+    int pro_choice;
+    printf("请输入项目编号：");
+    scanf("%d", &pro_choice);
+    clear_buffer();
+
+    // 检查项目编号合法性
+    if (pro_choice < 1 || pro_choice > MAX_PROJECT) {
+        printf("项目编号输入错误！\n");
+        return;
+    }
+
+    int pro_index = pro_choice - 1;  // 转换为数组下标（从0开始）
+    // 如果学生已报名其他项目，先减少原项目的报名人数
+    if (students[stu_index].pro_idx != -1) {
+        projects[students[stu_index].pro_idx].pro_count--;
+    }
+
+    // 更新学生的报名项目，并增加新项目的报名人数
+    students[stu_index].pro_idx = pro_index;
+    projects[pro_index].pro_count++;
+
+    printf("报名成功！%s同学已报名【%s】项目。\n", students[stu_index].stu_name, projects[pro_index].pro_name);
+}
+
+// 按学号查询学生的报名信息
+void query_by_stuid() {
+    if (stu_num == 0) {
+        printf("暂无录入的学生信息！\n");
+        return;
+    }
+
+    char temp_id[15];
+    printf("请输入要查询的学生学号：");
+    scanf("%s", temp_id);
+    clear_buffer();
+
+    // 遍历查找学生
+    int stu_index = -1;
+    for (i = 0; i < stu_num; i++) {
+        if (strcmp(students[i].stu_id, temp_id) == 0) {
+            stu_index = i;
+            break;
+        }
+    }
+
+    if (stu_index == -1) {
+        printf("未找到该学号的学生！\n");
+        return;
+    }
+
+    // 显示学生信息和报名状态
+    printf("====================学生报名信息====================\n");
+    printf("学号：%s\n", students[stu_index].stu_id);
+    printf("姓名：%s\n", students[stu_index].stu_name);
+    printf("年级：%s\n", students[stu_index].stu_grade);
+    if (students[stu_index].pro_idx == -1) {
+        printf("报名状态：未报名任何运动项目\n");
+    } else {
+        printf("报名状态：已报名【%s】项目\n", projects[students[stu_index].pro_idx].pro_name);
+    }
+    printf("====================================================\n");
+}
+
+// 按项目查询报名的学生列表
+void query_by_project() {
+    if (stu_num == 0) {
+        printf("暂无录入的学生信息！\n");
+        return;
+    }
+
+    // 显示项目列表及当前报名人数
+    printf("请选择要查询的项目（1-%d）：\n", MAX_PROJECT);
+    for ( i = 0; i < MAX_PROJECT; i++) {
+        printf("%d. %s（当前报名人数：%d）\n", i + 1, projects[i].pro_name, projects[i].pro_count);
+    }
+
+    int pro_choice;
+    printf("请输入项目编号：");
+    scanf("%d", &pro_choice);
+    clear_buffer();
+
+    if (pro_choice < 1 || pro_choice > MAX_PROJECT) {
+        printf("项目编号输入错误！\n");
+        return;
+    }
+
+    int pro_index = pro_choice - 1;
+    printf("====================【%s】报名学生====================\n", projects[pro_index].pro_name);
+
+    // 遍历查找报名该项目的学生
+    int has_student = 0;  // 标记是否有学生报名
+    for ( i = 0; i < stu_num; i++) {
+        if (students[i].pro_idx == pro_index) {
+            printf("学号：%s\t姓名：%s\t年级：%s\n", students[i].stu_id, students[i].stu_name, students[i].stu_grade);
+            has_student = 1;
+        }
+    }
+
+    if (!has_student) {
+        printf("暂无学生报名该项目！\n");
+    }
+    printf("=======================================================\n");
+}
+
+// 统计各运动项目的报名人数
+void count_project() {
+    printf("====================项目报名人数统计====================\n");
+    for ( i = 0; i < MAX_PROJECT; i++) {
+        printf("项目：%s\t报名人数：%d人\n", projects[i].pro_name, projects[i].pro_count);
+    }
+    printf("=======================================================\n");
+}
+
+// 按报名人数降序排序项目（冒泡排序：大一核心排序算法）
+void sort_project() {
+    // 冒泡排序核心逻辑：相邻元素比较，交换位置
+    for (i = 0; i < MAX_PROJECT - 1; i++) {
+        for ( j = 0; j < MAX_PROJECT - 1 - i; j++) {
+            if (projects[j].pro_count < projects[j + 1].pro_count) {
+                // 交换两个项目的信息
+                SportProject temp_pro = projects[j];
+                projects[j] = projects[j + 1];
+                projects[j + 1] = temp_pro;
+            }
+        }
+    }
+
+    // 显示排序结果
+    printf("====================项目排序结果（降序）====================\n");
+    for ( i = 0; i < MAX_PROJECT; i++) {
+        printf("%d. %s\t报名人数：%d人\n", i + 1, projects[i].pro_name, projects[i].pro_count);
+    }
+    printf("============================================================\n");
+}
+
+// 显示所有学生和项目的完整信息
+void show_all_info() {
+    printf("====================所有学生信息====================\n");
+    if (stu_num == 0) {
+        printf("暂无学生信息！\n");
+    } else {
+        for (i = 0; i < stu_num; i++) {
+            printf("学号：%s\t姓名：%s\t年级：%s\t", students[i].stu_id, students[i].stu_name, students[i].stu_grade);
+            if (students[i].pro_idx == -1) {
+                printf("未报名\n");
+            } else {
+                printf("报名项目：%s\n", projects[students[i].pro_idx].pro_name);
+            }
+        }
+    }
+
+    printf("\n====================所有项目信息====================\n");
+    for ( i = 0; i < MAX_PROJECT; i++) {
+        printf("项目：%s\t报名人数：%d人\n", projects[i].pro_name, projects[i].pro_count);
+    }
+    printf("====================================================\n");
+}
